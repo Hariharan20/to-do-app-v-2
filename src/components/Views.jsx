@@ -18,9 +18,18 @@ class SimpleTable  extends React.Component {
   }
   
   componentDidMount() {
+    let _username='';
+    _username = JSON.parse(localStorage.getItem('username'));
     fetch('http://localhost:3001/todo',{
-      method:'GET'}
-    )
+      method:'POST',
+      mode:'cors',
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body:JSON.stringify({
+        username:_username,
+      })
+    })
     .then(response => response.json())
     .then((Data) => {
       // Data is parsed json object received from url

@@ -13,6 +13,14 @@ class MyForm extends React.Component {
         }
     }
 
+    componentDidMount () {
+      let _username=''
+      if (localStorage) {
+        _username = JSON.parse(localStorage.getItem('username'));
+        this.setState({username:_username})
+      }
+    }
+
     changeHandler = e =>{
       this.setState({[e.target.name]:e.target.value})
     }
@@ -25,7 +33,7 @@ class MyForm extends React.Component {
         method:'POST',
         mode:'cors',
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body:JSON.stringify(this.state)
       })      
@@ -45,7 +53,7 @@ class MyForm extends React.Component {
               <div className="col-6">
                 <div>
                   <form onSubmit={this.submitHandler}>
-                    <input type="text" name="username"  value={username} placeholder="Username" onChange={this.changeHandler} required></input>
+                    <input type="text" name="username"  value={username} placeholder="Username" onChange={this.changeHandler} disabled={"disabled"} required></input>
                     <input type="date" name="date"  value={date} placeholder="Date-of-Task(DD/MM/YYYY)" onChange={this.changeHandler} required></input>
                     <input type="time" name="time"  value={time} placeholder="Time-of-Task(HH:MM),(24 hours)" onChange={this.changeHandler} required></input>
                     <input type="text" name="taskname"  value={taskname} placeholder="Task-Name" onChange={this.changeHandler} required></input>
