@@ -5,6 +5,7 @@ import Add from './components/Add'
 import Home from './components/Home'
 import SimpleTable from './components/Views'
 import Edit from './components/Edit'
+import Login from './components/Login'
 
 class App extends React.Component {
   render() {
@@ -17,6 +18,7 @@ class App extends React.Component {
               <Route path="/add" component={Add} />
               <Route path="/view" exact component={SimpleTable}/>
               <Route path="/edit" component={Edit} />
+              <Route path="/login" component={Login} />
             </Switch>
           </div>
         </Router>
