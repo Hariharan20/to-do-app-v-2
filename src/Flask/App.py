@@ -5,6 +5,7 @@ from runenv import load_env
 import os
 import mysql.connector
 import json
+import bcrypt
 
 app=Flask(__name__)
 CORS(app)
@@ -21,13 +22,15 @@ config = {
 }
  
 
-@app.route('/todo', methods=['GET'])
+@app.route('/todo', methods=['POST'])
 def givedata():
-    if request.method == 'GET':
+    if request.method == 'POST':
+        details=request.get_json()
+        username=details['username']
         mydb=mysql.connector.connect(**config)
         mycursor=mydb.cursor()
         Table=[]
-        mycursor.execute("SELECT TASKID,USERNAME,DATE_FORMAT(TASKDATE,'%d/%m/%y'),DATE_FORMAT(TASKTIME,'%H:%i'),TASK FROM TODO")
+        mycursor.execute("SELECT ID,USERNAME,DATE_FORMAT(TASKDATE,'%d/%m/%y'),DATE_FORMAT(TASKTIME,'%H:%i'),TASK FROM TODOV2 WHERE USERNAME = %s",(username,))
         for x in mycursor:
             Table.append(list(x))
         table_json=[]
@@ -35,6 +38,63 @@ def givedata():
             temp={'taskid':row[0],'username':row[1],'taskdate':row[2],'tasktime':row[3],'taskname':row[4]}
             table_json.append(temp)
         return json.dumps(table_json)
+
+    if request.method == "OPTIONS":
+       response = make_response()
+       response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+       response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
+       response.headers.add('Access-Control-Allow-Methods', "POST")
+       response.headers.add('Access-Control-Allow-Credentials', 'true')
+       return response
+
+@app.route('/user/signup',methods=['POST','OPTIONS'])
+def adduser():
+   if request.method == "POST":
+       details=request.get_json()
+       username=details['username']
+       password=details['password']
+       salt=os.environ.get('salt')
+       print(username,password)
+       hashed = bcrypt.hashpw(password.encode('utf-8'),salt.encode('utf-8'))
+       mydb=mysql.connector.connect(**config)
+       mycursor=mydb.cursor()
+       mycursor.execute("INSERT INTO USERS(USERNAME,PASSWORD) VALUES(%s,%s)",(username,hashed))
+       mydb.commit()
+       return ({"username":username})
+
+   if request.method == "OPTIONS":
+       response = make_response()
+       response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+       response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
+       response.headers.add('Access-Control-Allow-Methods', "POST")
+       response.headers.add('Access-Control-Allow-Credentials', 'true')
+       return response
+    
+@app.route('/user/login',methods=['POST','OPTIONS'])
+def authuser():
+   if request.method == "POST":
+       details=request.get_json()
+       username=details['username']
+       password=details['password']
+       salt=os.environ.get('salt')
+       print(username,password)
+       hashed = bcrypt.hashpw(password.encode('utf-8'),salt.encode('utf-8'))
+       mydb=mysql.connector.connect(**config)
+       mycursor=mydb.cursor()
+       mycursor.execute("SELECT PASSWORD FROM USERS WHERE USERNAME=%s",(username,))
+       hashpwd=mycursor.fetchone()[0]
+       if(hashpwd==hashed.decode()):
+          return ({"noerror":"valid","username":username})
+       else:
+          return ({"noerror":"invalid"})
+
+   if request.method == "OPTIONS":
+       response = make_response()
+       response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+       response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
+       response.headers.add('Access-Control-Allow-Methods', "POST")
+       response.headers.add('Access-Control-Allow-Credentials', 'true')
+       return response
 
 @app.route('/todo/add',methods=['POST','OPTIONS'])
 def addtotable():
@@ -46,8 +106,7 @@ def addtotable():
        taskname=details['taskname']
        mydb=mysql.connector.connect(**config)
        mycursor=mydb.cursor()
-       print("Entered Here :)")
-       mycursor.execute("INSERT INTO TODO(USERNAME,TASKDATE,TASKTIME,TASK) VALUES(%s,%s,%s,%s)",(username,taskdate,tasktime,taskname))
+       mycursor.execute("INSERT INTO TODOV2(USERNAME,TASKDATE,TASKTIME,TASK) VALUES(%s,%s,%s,%s)",(username,taskdate,tasktime,taskname))
        mydb.commit()
        return ({"username":username,"taskname":taskname})
 
@@ -57,7 +116,6 @@ def addtotable():
        response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
        response.headers.add('Access-Control-Allow-Methods', "POST")
        response.headers.add('Access-Control-Allow-Credentials', 'true')
-       print('Before Returning')
        return response
 
 @app.route('/todo/convert',methods=['POST','OPTIONS'])
@@ -70,7 +128,6 @@ def convertdata():
        tasktime=details['tasktime']
        taskname=details['taskname']
        print(taskid,taskdate,taskname,tasktime,username)
-       print("Entered Here :)")
        year=int(taskdate[len(taskdate)-2:])
        if(year>0 and year<69):
            taskdate="20"+taskdate[len(taskdate)-2:]+"-"+taskdate[3:5]+"-"+taskdate[:2]
@@ -85,7 +142,6 @@ def convertdata():
        response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
        response.headers.add('Access-Control-Allow-Methods', "POST")
        response.headers.add('Access-Control-Allow-Credentials', 'true')
-       print('Before Returning')
        return response
 
 @app.route('/todo/edit',methods=['POST','OPTIONS'])
@@ -101,7 +157,7 @@ def editdata():
        mydb=mysql.connector.connect(**config)
        mycursor=mydb.cursor()
        print("Entered Here :)")
-       mycursor.execute("UPDATE TODO SET USERNAME=%s,TASKDATE=%s,TASK=%s,TASKTIME=%s WHERE TASKID=%s",(username,taskdate,taskname,tasktime,taskid))
+       mycursor.execute("UPDATE TODOV2 SET TASKDATE=%s,TASK=%s,TASKTIME=%s WHERE ID=%s AND USERNAME=%s",(taskdate,taskname,tasktime,taskid,username,))
        mydb.commit()
        return (details)
    
@@ -111,7 +167,6 @@ def editdata():
        response.headers.add('Access-Control-Allow-Headers', "Content-Type, Authorization")
        response.headers.add('Access-Control-Allow-Methods', "POST")
        response.headers.add('Access-Control-Allow-Credentials', 'true')
-       print('Before Returning')
        return response
 
 @app.route('/todo/delete',methods=['POST','OPTIONS'])
@@ -126,8 +181,7 @@ def deletefromtable():
        print(taskid,username,taskname,taskdate,tasktime)
        mydb=mysql.connector.connect(**config)
        mycursor=mydb.cursor()
-       print("Entered Here :)")
-       mycursor.execute("DELETE FROM TODO WHERE TASKID=%s",(taskid,))
+       mycursor.execute("DELETE FROM TODOV2 WHERE ID=%s",(taskid,))
        mydb.commit()
        return details
 
