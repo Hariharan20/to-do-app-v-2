@@ -21,7 +21,7 @@ config = {
 'database':database
 }
  
-
+#todo route is used to fetch from ToDo table and display in view route
 @app.route('/todo', methods=['POST'])
 def givedata():
     if request.method == 'POST':
@@ -47,6 +47,7 @@ def givedata():
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
 
+#when a new user needs to be created user/signup route will be used
 @app.route('/user/signup',methods=['POST','OPTIONS'])
 def adduser():
    if request.method == "POST":
@@ -69,7 +70,9 @@ def adduser():
        response.headers.add('Access-Control-Allow-Methods', "POST")
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
-    
+
+#for an existing user when he/she needs to login
+#validation is made in user/login route
 @app.route('/user/login',methods=['POST','OPTIONS'])
 def authuser():
    if request.method == "POST":
@@ -96,6 +99,8 @@ def authuser():
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
 
+
+#to add a new todo in ToDo table for the logged in user todo/add route is used
 @app.route('/todo/add',methods=['POST','OPTIONS'])
 def addtotable():
    if request.method == "POST":
@@ -117,7 +122,9 @@ def addtotable():
        response.headers.add('Access-Control-Allow-Methods', "POST")
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
-
+       
+# to convert the data into actual json format todo/convert route is used
+# the converted data will be sent to perform edit operation
 @app.route('/todo/convert',methods=['POST','OPTIONS'])
 def convertdata():
    if request.method == "POST":
@@ -144,6 +151,8 @@ def convertdata():
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
 
+# data which needs to be edited is received from convert route's response
+#and sent to edit route, after editing the data is sent to ToDo table in this route
 @app.route('/todo/edit',methods=['POST','OPTIONS'])
 def editdata():
    if request.method == "POST":
@@ -169,6 +178,7 @@ def editdata():
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        return response
 
+# data which needs to be deleted is sent to this route to delete from ToDo table
 @app.route('/todo/delete',methods=['POST','OPTIONS'])
 def deletefromtable():
     if request.method == "POST":
