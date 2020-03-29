@@ -7,8 +7,7 @@ class Home extends React.Component {
              <h1>/      -   Home...</h1>
              <h1>/add   -   Add...</h1>
              <h1>/view  -  View...</h1>
-             <h1>/view  -  Login...</h1>
-             <h1>/view  -  SignUp...</h1>
+             <h1>/login  -  Login or Signup..</h1>
           </div>
        )
     }
